@@ -1,10 +1,12 @@
 """
 MPU6050 Micropython I2C Class Support ESP32 and ESP8266, etc
 Code based on 
-1 - I2Cdev library collection  MPU6050 I2C device class
-by Jeff Rowberg Geir Istad  2015
-2 - MPU6050 Python I2C Class 
-by Majid Alekasir 2024
+1 - I2Cdev device library  
+by Jeff Rowberg  2012 
+2 - MPU6050 I2C device class
+by Jeff Rowberg Geir Istad  2015  
+3 - MPU6050 Python I2C Class 
+by Majid Alekasir 2024 MAY
 ============================================
 MIT license
 Copyright (c) 2024 yanhuafeng
