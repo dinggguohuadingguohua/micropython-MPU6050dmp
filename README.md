@@ -7,11 +7,11 @@ micropython-MPU6050dmp
 推荐使用 `mpu.isok` 来确定 iic 是否正常工作
 
 ## 对于小白
-使用 iic.readfrom_mem 和 iic.writeto_mem 来读取/配置寄存器 
+使用 iic.readfrom_mem 和 iic.writeto_mem 来读取/配置寄存器   
 绝大多数寄存器查阅 https://invensense.tdk.com/wp-content/uploads/2015/02/MPU-6000-Register-Map1.pdf
 
 ## FIFO格式
- '''
+```
      * ================================================================================================ *
      | Default MotionApps v2.0 42-byte FIFO packet structure:                                           |
      |                                                                                                  |
@@ -21,5 +21,5 @@ micropython-MPU6050dmp
      | [GYRO Z][      ][ACC X ][      ][ACC Y ][      ][ACC Z ][      ][      ]                         |
      |  24  25  26  27  28  29  30  31  32  33  34  35  36  37  38  39  40  41                          |
      * ================================================================================================ *
-'''
+```
 
