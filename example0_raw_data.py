@@ -6,7 +6,6 @@ by Jeff Rowberg Geir Istad  2015
 2 - MPU6050 Python I2C Class 
 by Majid Alekasir 2024
 ============================================
-I2Cdev device library code is placed under the MIT license
 Copyright (c) 2024 yanhuafeng
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
