@@ -7,7 +7,7 @@ micropython-MPU6050dmp
 - dmp.bin
 - MPU6050.py 
 
-上传后可以运行 examples 中的案例
+上传后可以运行 example 中的案例
 
 这里以 mpu 举例  
 推荐使用 `mpu.isok` 来确定 iic 是否正常工作
