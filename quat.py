@@ -1,4 +1,3 @@
-__author__ = 'Geir Istad'
 """
 MPU6050 Python I2C Class
 Copyright (c) 2015 Geir Istad
