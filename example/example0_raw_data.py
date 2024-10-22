@@ -31,19 +31,17 @@ from machine import I2C,Pin
 i2c = I2C(scl=Pin(6), sda=Pin(7))
 device_address = 0x68
 freq_divider = 0x04 # freq = 200Hz / (1 + value)  推荐 >=4
-
-# Make an MPU6050
 mpu = MPU6050(i2c, device_address, freq_divider)
 
 # 执行一次即可
+mpu.calibrate(256, 2) 
 mpu.dmp_initialize()
 mpu.set_DMP_enabled(True)
-
 
 g = 9.8 # gravity acceleration (m/s^2)
 
 while True: # infinite loop
-    while not mpu.isreadyFIFO(): # Check if FIFO data are ready to use...
+    while not mpu.isreadyFIFO(): # 等待数据
         pass
 
     # DMP acceleration (less noisy acceleration - based on fusion)
@@ -68,4 +66,4 @@ while True: # infinite loop
     Gz = gyro_z * 250 / 2**15
 
 
-    print("AcX: {}, AcY: {}, AcZ: {}".format(Ax, Ay, Az))
+    print("AcX: {}, AcY: {}, AcZ: {}".format(Ax_dmp, Ay_dmp, Az_dmp))

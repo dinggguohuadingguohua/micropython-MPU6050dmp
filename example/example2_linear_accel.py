@@ -27,42 +27,33 @@ THE SOFTWARE.
 """
 from MPU6050 import MPU6050
 from machine import I2C,Pin
-from quat import Quaternion,XYZVector
+
 i2c = I2C(scl=Pin(6), sda=Pin(7))
 device_address = 0x68
-freq_divider = 0x04  # freq = 200Hz / (1 + value)  推荐 >=4
+mpu = MPU6050(i2c, device_address)
 
-# Make an MPU6050
-mpu = MPU6050(i2c, device_address, freq_divider)
-
-# Initiate your DMP
-mpu.dmp_initialize()
-mpu.set_DMP_enabled(True)
+# 执行一次即可
+# mpu.dmp_initialize()
+# mpu.set_DMP_enabled(True)
 
 g = 9.8 # gravity acceleration (m/s^2)
 
 while True: # infinite loop
-    while not mpu.isreadyFIFO(): # Check if FIFO data are ready to use...
+    while not mpu.isreadyFIFO(): # 等待数据
         pass  
 
-    FIFO_buffer = mpu.get_FIFO_bytes() # get all the DMP data here
+    FIFO_buffer = mpu.get_FIFO_bytes() 
 
     # raw acceleration
-    accel = XYZVector()
-    accel.x ,accel.y, accel.z = mpu.acceleration
-    accel.x = accel.x * 2*g / 2**15
-    accel.y = accel.y * 2*g / 2**15
-    accel.z = accel.z * 2*g / 2**15
+    accel_x ,accel_y, accel_z = mpu.acceleration
+    accel_x = accel_x * 2*g / 2**15
+    accel_y = accel_y * 2*g / 2**15
+    accel_z = accel_z * 2*g / 2**15
     
     # quaternion
-    quat = Quaternion()
-    quat.w,quat.x,quat.y,quat.z = mpu.DMP_get_quaternion_int16(FIFO_buffer)
-    quat.normalize()
-
-    # world-frame acceleration vectors (practical for INS)
-    accel_linear = accel.get_rotated(quat) 
-    Ax_linear = round(accel_linear.x, 2)
-    Ay_linear = round(accel_linear.y, 2)
-    Az_linear = round(accel_linear.z, 2)
+    quat_w,quat_x,quat_y,quat_z = mpu.DMP_get_quaternion_int16(FIFO_buffer)
+    # accel_InWorld
+    Ax_linear, Ay_linear, Az_linear = mpu.get_accel_InWorld( [accel_x ,accel_y, accel_z],[quat_w,quat_x,quat_y,quat_z]) 
     
-    print("linear: Ax: {}, Ay: {}, Az: {}".format(Ax_linear, Ay_linear, Az_linear)) # 在thonny中绘制
+    print("linear: Ax: {:.2f}, Ay: {:.2f}, Az: {:.2f}".format(Ax_linear, Ay_linear, Az_linear)) # 在thonny中绘制
+

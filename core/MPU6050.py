@@ -1,4 +1,4 @@
-import math,struct,time
+import math,struct,utime
 from micropython import const
 
 # From MPU6050.h
@@ -393,13 +393,13 @@ class i2c_func:
 class MPU6050:
     __buffer = [0] * 14
     __debug = False
-    __DMP_packet_size = 0
-    __dev_id = 0
+    __DMP_packet_size = 42
+    __dev_id = 0x68
     __bus = None
 
     def __init__(self,  i2c, a_address=_DEFAULT_ADDRESS, freq_divider=4,
-                 a_xAOff=0, a_yAOff=0, a_zAOff=0, a_xGOff=0,
-                 a_yGOff=0, a_zGOff=0, a_debug=False):
+                 a_xAOff=0, a_yAOff=0, a_zAOff=0, 
+                 a_xGOff=0, a_yGOff=0, a_zGOff=0, a_debug=False):
 
         ### Define the divider of the DMP frequency
         self.freq_divider = freq_divider
@@ -435,7 +435,7 @@ class MPU6050:
         ok = self.__bus.read_byte_data(self.__dev_id, _RA_WHO_AM_I) == 0x68
         return ok
     
-    def isreadyFIFO(self, packet_size):
+    def isreadyFIFO(self, packet_size=42):
         FIFO_count = self.get_FIFO_count()
         mpu_int_status = self.get_int_status()
 
@@ -626,10 +626,9 @@ class MPU6050:
 
     def write_prog_memory_block(self, a_data_list_index, a_data_size, a_bank=0,
                                 a_address=0, a_verify=True):
-        ''' 最快速度 '''
         with open( 'dmp.bin' , 'rb') as f:
             f.seek( a_data_list_index )
-            a_data_list = f.read(a_data_size) # 读取一个数
+            a_data_list = f.read(a_data_size) 
         return self.write_memory_block(a_data_list, a_data_size, a_bank,
                                        a_address, a_verify)
 
@@ -660,7 +659,6 @@ class MPU6050:
                         self.__dev_id, _RA_INT_ENABLE, 0x32)
 
             if success == False:
-                # TODO implement error messagemajigger
                 return False
                 pass
         return True
@@ -753,7 +751,7 @@ class MPU6050:
         # Reset the MPU
         self.reset()
         # time.Sleep a bit while resetting
-        time.sleep(50 / 1000)
+        utime.sleep_ms(50 )
         # Disable time.sleep mode
         self.set_sleep_enabled(0)
 
@@ -810,7 +808,7 @@ class MPU6050:
             print('Resetting I2C Master control')
         self.reset_I2C_master()
         # Wait a bit for the device to register the changes
-        time.sleep(20 / 1000)
+        utime.sleep(20 )
 
         # load DMP code into memory banks
         if self.__debug:
@@ -1066,44 +1064,67 @@ class MPU6050:
             print('DMP initialization was successful')
         return 0
 
-    # Acceleration and gyro offset setters and getters
     def set_x_accel_offset(self, a_offset):
+        a_offset = struct.pack('>h',int(a_offset)>>2)
         self.__bus.write_byte_data(self.__dev_id, _RA_XA_OFFS_H,
-                                   a_offset >> 8)
+                                   a_offset[0])
         self.__bus.write_byte_data(self.__dev_id, _RA_XA_OFFS_L_TC,
-                                   a_offset & 0xFF )
+                                   a_offset[1] )
 
     def set_y_accel_offset(self, a_offset):
+        a_offset = struct.pack('>h',int(a_offset)>>2)
         self.__bus.write_byte_data(self.__dev_id, _RA_YA_OFFS_H,
-                                   a_offset >> 8)
+                                   a_offset[0])
         self.__bus.write_byte_data(self.__dev_id, _RA_YA_OFFS_L_TC,
-                                   a_offset & 0xFF )
+                                   a_offset[1])
 
     def set_z_accel_offset(self, a_offset):
+        a_offset = struct.pack('>h',int(a_offset)>>2)
         self.__bus.write_byte_data(self.__dev_id, _RA_ZA_OFFS_H,
-                                   a_offset >> 8)
+                                   a_offset[0])
         self.__bus.write_byte_data(self.__dev_id, _RA_ZA_OFFS_L_TC,
-                                   a_offset & 0xFF )
+                                   a_offset[1])
 
     def set_x_gyro_offset(self, a_offset):
+        a_offset = struct.pack('>h',int(a_offset)>>2)
         self.__bus.write_byte_data(self.__dev_id, _RA_XG_OFFS_USRH,
-                                   a_offset >> 8)
+                                   a_offset[0])
         self.__bus.write_byte_data(self.__dev_id, _RA_XG_OFFS_USRL,
-                                   a_offset & 0xFF )
+                                   a_offset[1])
 
     def set_y_gyro_offset(self, a_offset):
+        a_offset = struct.pack('>h',int(a_offset)>>2)
         self.__bus.write_byte_data(self.__dev_id, _RA_YG_OFFS_USRH,
-                                   a_offset >> 8)
+                                   a_offset[0])
         self.__bus.write_byte_data(self.__dev_id, _RA_YG_OFFS_USRL,
-                                   a_offset & 0xFF )
+                                   a_offset[1])
 
     def set_z_gyro_offset(self, a_offset):
+        a_offset = struct.pack('>h',int(a_offset)>>2)
         self.__bus.write_byte_data(self.__dev_id, _RA_ZG_OFFS_USRH,
-                                   a_offset >> 8)
+                                   a_offset[0] )
         self.__bus.write_byte_data(self.__dev_id, _RA_ZG_OFFS_USRL,
-                                   a_offset & 0xFF )
+                                   a_offset[1])
 
-    # Main interfacing functions to get raw data from MPU
+    def calibrate(self, count=256, delay_ms=0):
+        self.set_x_gyro_offset(0)
+        self.set_y_gyro_offset(0)
+        self.set_z_gyro_offset(0)
+
+        o_x, o_y, o_z = (0.0, 0.0, 0.0)
+        n = float(count)
+        while count:
+            utime.sleep_ms(delay_ms)
+            gx, gy, gz = self.rotation
+            o_x -= gx
+            o_y -= gy
+            o_z -= gz
+            count -= 1
+        self.set_x_gyro_offset(o_x / n)
+        self.set_y_gyro_offset(o_y / n)
+        self.set_z_gyro_offset(o_z / n)
+        return o_x / n, o_y / n, o_z / n
+    
     @property
     def acceleration(self):
         raw_data = self.__bus.read_i2c_block_data(self.__dev_id,
@@ -1118,7 +1139,7 @@ class MPU6050:
         x,y,z = struct.unpack(">hhh", raw_data)
         return x,y,z
 
-    # Interfacing functions to get data from FIFO buffe
+    # Interfacing functions to get data from FIFO buffer
     def DMP_get_FIFO_packet_size(self):
         return self.__DMP_packet_size
 
@@ -1127,14 +1148,11 @@ class MPU6050:
                        _USERCTRL_FIFO_RESET_BIT, True)
 
     def get_FIFO_count(self):
-        # data = [0] * 2
-        # data = self.read_bytes(data, _RA_FIFO_COUNTH, 2)
         data = self.__bus.read_i2c_block_data(self.__dev_id,_RA_FIFO_COUNTH, 2)
         count, = struct.unpack(">h",data)
         return count
 
-    def get_FIFO_bytes(self, a_FIFO_count):
-        # return_list = list()
+    def get_FIFO_bytes(self, a_FIFO_count=42):
         return_list = bytearray()
         for index in range(0, a_FIFO_count):
             return_list.append( self.__bus.read_byte_data(self.__dev_id, _RA_FIFO_R_W))
@@ -1145,6 +1163,12 @@ class MPU6050:
                                          _RA_INT_STATUS)
 
     # Data retrieval from received FIFO buffer
+    def DMP_get_acceleration_int16(self, a_FIFO_buffer):
+        x, = struct.unpack(">h", a_FIFO_buffer[28:30])
+        y, = struct.unpack(">h", a_FIFO_buffer[32:34])
+        z, = struct.unpack(">h", a_FIFO_buffer[36:38])
+        return x, y, z
+    
     def DMP_get_quaternion_int16(self, a_FIFO_buffer):
         w, = struct.unpack(">h",a_FIFO_buffer[0:2])
         x, = struct.unpack(">h",a_FIFO_buffer[4:6])
@@ -1159,21 +1183,22 @@ class MPU6050:
         y = y / 16384.0
         z = z / 16384.0
         return w, x, y, z
-
-    def DMP_get_acceleration_int16(self, a_FIFO_buffer):
-        x, = struct.unpack(">h", a_FIFO_buffer[28:30])
-        y, = struct.unpack(">h", a_FIFO_buffer[32:34])
-        z, = struct.unpack(">h", a_FIFO_buffer[36:38])
-        return x, y, z
-
+    
     def DMP_get_gravity(self, w,x,y,z):
         x = 2.0 * ( x *  z -  w *  y)
         y = 2.0 * ( w *  x +  y *  z)
         z = 1.0 * ( w *  w -  x *  x -
                     y *  y +  z *  z)
         return x, y, z
-
-    def DMP_get_euler(self, w,x,y,z):
+    
+    def DMP_get_linear_accel(self, x,y,z, gx,gy,gz):
+        x = x - gx*8192
+        y = y - gy*8192
+        z = z - gz*8192
+        return x, y, z
+    
+    @classmethod
+    def get_euler(self, w,x,y,z):
         psi = math.atan2(2* x* y - 2* w* z,
                          2* w* w + 2* x* x - 1)
         theta = -math.asin(2* x* z + 2* w* y)
@@ -1181,28 +1206,43 @@ class MPU6050:
                          2* w* w + 2* z* z - 1)
         return psi, theta, phi
 
-    def DMP_get_roll_pitch_yaw(self, w,x,y,z):
-        norm = math.sqrt( w**2 +  x**2 +  y**2 +  z**2)
-        w =  w / norm
-        x =  x / norm
-        y =  y / norm
-        z =  z / norm
+    @classmethod
+    def get_roll_pitch_yaw(self, w,x,y,z):
+        w,x,y,z = self.normalize([w,x,y,z])
         yaw = math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z))
         pitch = math.asin(2 * (w * y - z * x))
         roll = math.atan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y))
         return roll, pitch, yaw
 
-    def DMP_get_euler_roll_pitch_yaw(self, w,x,y,z):
-        roll, pitch, yaw = self.DMP_get_roll_pitch_yaw(w,x,y,z)
+    @classmethod
+    def get_euler_roll_pitch_yaw(self, w,x,y,z):
+        roll, pitch, yaw = self.get_roll_pitch_yaw(w,x,y,z)
         roll = roll * (180.0/math.pi)
         pitch = pitch * (180.0/math.pi)
         yaw = yaw * (180.0/math.pi)
         return roll, pitch, yaw
 
-    def DMP_get_linear_accel(self, a_vector_raw, a_vect_grav):
-        x = a_vector_raw.x - a_vect_grav.x*8192
-        y = a_vector_raw.y - a_vect_grav.y*8192
-        z = a_vector_raw.z - a_vect_grav.z*8192
-        return x, y, z
 
-
+    @classmethod
+    def quat_product(self, q_1, q_2):
+        return  (q_1[0] * q_2[0] - q_1[1] * q_2[1] - q_1[2] * q_2[2] - q_1[3] * q_2[3],
+                 q_1[0] * q_2[1] + q_1[1] * q_2[0] + q_1[2] * q_2[3] - q_1[3] * q_2[2],
+                 q_1[0] * q_2[2] - q_1[1] * q_2[3] + q_1[2] * q_2[0] + q_1[3] * q_2[1],
+                 q_1[0] * q_2[3] + q_1[1] * q_2[2] - q_1[2] * q_2[1] + q_1[3] * q_2[0])
+    
+    @classmethod
+    def normalize(self, numbers:list):
+        norm = math.sqrt( sum([number ** 2 for number in numbers]) )
+        return [number / norm for number in numbers]
+    
+    @classmethod
+    def get_accel_InWorld(self, acc_list:list, quat_list:list):
+        q_1 = [0] + acc_list
+        q_2 = self.normalize(quat_list)
+        q_1 = self.quat_product(q_2,q_1)
+        q_2[1] = -q_2[1]
+        q_2[2] = -q_2[2]
+        q_2[3] = -q_2[3] # conjugate
+        q_1 = self.quat_product(q_1,q_2)
+        # now [0, x', y', z']
+        return q_1[1],q_1[2],q_1[3]

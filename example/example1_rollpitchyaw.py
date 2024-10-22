@@ -30,26 +30,24 @@ from machine import I2C,Pin
 
 i2c = I2C(scl=Pin(6), sda=Pin(7))
 device_address = 0x68
-freq_divider = 0x04  # freq = 200Hz / (1 + value)  推荐 >=4
+mpu = MPU6050(i2c, device_address)
 
-# Make an MPU6050
-mpu = MPU6050(i2c, device_address, freq_divider)
-
-# Initiate your DMP
-mpu.dmp_initialize()
-mpu.set_DMP_enabled(True)
-
-packet_size = mpu.DMP_get_FIFO_packet_size()
-FIFO_buffer = [0]*64
+# 执行一次即可
+# mpu.dmp_initialize()
+# mpu.set_DMP_enabled(True)
 
 while True: # infinite loop
-    while not mpu.isreadyFIFO(packet_size): # Check if FIFO data are ready to use...
+    while not mpu.isreadyFIFO(): # 等待数据
         pass
         
-    FIFO_buffer = mpu.get_FIFO_bytes(packet_size) # get all the DMP data here
+    FIFO_buffer = mpu.get_FIFO_bytes()
     
-    qw,qx,qy,qz = mpu.DMP_get_quaternion_int16(FIFO_buffer)
-    grav_x,grav_y,grav_z = mpu.DMP_get_gravity(qw,qx,qy,qz)
+    qw,qx,qy,qz = mpu.DMP_get_quaternion(FIFO_buffer)
     roll, pitch, yaw = mpu.DMP_get_euler_roll_pitch_yaw(qw,qx,qy,qz)
-    
     print("roll: {}, pitch: {}, yaw: {}".format(roll, pitch, yaw))
+    
+    ax,ay,az = mpu.DMP_get_acceleration_int16(FIFO_buffer)
+    grav_x,grav_y,grav_z = mpu.DMP_get_gravity(qw,qx,qy,qz)
+    acc_x,acc_y,acc_z = mpu.DMP_get_linear_accel(ax, ay, az ,grav_x,grav_y,grav_z ) # 矫正后加速度
+    
+    
