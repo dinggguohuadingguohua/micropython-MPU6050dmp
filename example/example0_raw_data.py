@@ -35,21 +35,19 @@ freq_divider = 0x04 # freq = 200Hz / (1 + value)  推荐 >=4
 # Make an MPU6050
 mpu = MPU6050(i2c, device_address, freq_divider)
 
-# Initiate your DMP
+# 执行一次即可
 mpu.dmp_initialize()
 mpu.set_DMP_enabled(True)
 
-packet_size = mpu.DMP_get_FIFO_packet_size()
-FIFO_buffer = [0]*64
 
 g = 9.8 # gravity acceleration (m/s^2)
 
 while True: # infinite loop
-    while not mpu.isreadyFIFO(packet_size): # Check if FIFO data are ready to use...
+    while not mpu.isreadyFIFO(): # Check if FIFO data are ready to use...
         pass
 
     # DMP acceleration (less noisy acceleration - based on fusion)
-    FIFO_buffer = mpu.get_FIFO_bytes(packet_size) 
+    FIFO_buffer = mpu.get_FIFO_bytes() 
     dmp_x,dmp_y,dmp_z = mpu.DMP_get_acceleration_int16(FIFO_buffer)
     Ax_dmp = dmp_x * 2*g / 2**15 * 2 # 单位换算 [-2g, +2g]. [-2^15, +2^15]
     Ay_dmp = dmp_y * 2*g / 2**15 * 2
