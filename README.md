@@ -30,8 +30,8 @@ gyro_x,gyro_y,gyro_z = mpu.rotation
 读取dmp数据
 ```py
 FIFO = mpu.get_FIFO_bytes()
-qw,qx,qy,qz = mpu.DMP_get_quaternion(FIFO) # /2**15
-qw,qx,qy,qz = mpu.DMP_get_quaternion_int16(FIFO)
+w,x,y,z= mpu.DMP_get_quaternion(FIFO) # /2**15
+w,x,y,z = mpu.DMP_get_quaternion_int16(FIFO)
 ax,ay,az = mpu.DMP_get_acceleration_int16(FIFO)
 ```
 
@@ -45,10 +45,10 @@ Ax_linear, Ay_linear, Az_linear = mpu.get_accel_InWorld( acc_list , quat_list) #
 
 可以直接运行 example 中的案例
 
-推荐使用 `mpu.isok` 来确定 iic 是否正常工作
+推荐使用 `mpu.isok` 来确定 i2c 是否正常工作
 
 ## 对于小白
-使用 iic.readfrom_mem 和 iic.writeto_mem 来读取/配置寄存器     
+使用 i2c.readfrom_mem 和 i2c.writeto_mem 来读取/配置寄存器     
 绝大多数寄存器查阅 https://invensense.tdk.com/wp-content/uploads/2015/02/MPU-6000-Register-Map1.pdf
 
 ### FIFO格式

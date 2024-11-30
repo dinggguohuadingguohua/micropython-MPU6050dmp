@@ -43,7 +43,7 @@ while True: # infinite loop
     FIFO_buffer = mpu.get_FIFO_bytes()
     
     qw,qx,qy,qz = mpu.DMP_get_quaternion(FIFO_buffer)
-    roll, pitch, yaw = mpu.DMP_get_euler_roll_pitch_yaw(qw,qx,qy,qz)
+    roll, pitch, yaw = mpu.get_euler_roll_pitch_yaw(qw,qx,qy,qz)
     print("roll: {}, pitch: {}, yaw: {}".format(roll, pitch, yaw))
     
     ax,ay,az = mpu.DMP_get_acceleration_int16(FIFO_buffer)
